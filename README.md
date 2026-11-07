@@ -1,93 +1,151 @@
-# MarkdownUI.Js
+# @aiursoft/uistack-markdown-ui
 
+Shared Markdown UI behavior for Aiursoft applications.
 
+- Secure `markdown-it` rendering with native HTML disabled
+- highlight.js 11.11.1 highlighting
+- Mermaid 11 enhancement with `securityLevel: "strict"`
+- MathJax 3 enhancement and print coordination
+- Monaco-compatible paste and drag/drop image upload
+- Shared Monaco editor lifecycle, shortcuts, preview, view modes and textarea fallback
 
-## Getting started
+## Install
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
-
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
-
-```
-cd existing_repo
-git remote add origin https://gitlab.aiursoft.com/aiursoft/MarkdownUI.js.git
-git branch -M master
-git push -uf origin master
+```bash
+npm install @aiursoft/uistack-markdown-ui
 ```
 
-## Integrate with your tools
+## Editor preview
 
-* [Set up project integrations](https://gitlab.aiursoft.com/aiursoft/MarkdownUI.js/-/settings/integrations)
+```js
+import { renderMarkdown } from "@aiursoft/uistack-markdown-ui";
 
-## Collaborate with your team
+preview.innerHTML = renderMarkdown(editor.getValue());
+```
 
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+The renderer supports `$...$`, `$$...$$`, `\\(...\\)` and `\\[...\\]`. Native HTML is
+always escaped. A fenced `mermaid` block remains unhighlighted for Mermaid to process.
 
-## Test and Deploy
+## Complete Markdown editor
 
-Use the built-in continuous integration in GitLab.
+`createMarkdownEditor` owns the common editor behavior while the application remains
+responsible for loading Monaco. Passing a loader instead of importing Monaco keeps it
+out of application bundles and works with the standard Monaco AMD loader.
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
+```js
+import { createMarkdownEditor } from "@aiursoft/uistack-markdown-ui";
 
-***
+const markdownEditor = await createMarkdownEditor({
+  editorContainer: document.querySelector("#markdown-editor"),
+  textarea: document.querySelector("#markdown-source"),
+  previewContainer: document.querySelector("#markdown-preview"),
+  editorPane: document.querySelector("#editor-pane"),
+  previewPane: document.querySelector("#preview-pane"),
+  form: document.querySelector("form"),
+  loadMonaco: () => AiursoftMarkdownUi.loadMonacoFromAmd(),
+  theme: "vs-dark",
+  uploadUrl: "/api/files/upload",
+  initialViewMode: "split",
+  viewModeStorageKey: "markdown-view-mode",
+  viewModeControls: [
+    { element: document.querySelector("#edit-mode"), mode: "editor" },
+    { element: document.querySelector("#split-mode"), mode: "split" },
+    { element: document.querySelector("#preview-mode"), mode: "preview" }
+  ],
+  hljs,
+  mermaid,
+  MathJax,
+  onSave: markdown => saveMarkdown(markdown),
+  onInitializationError: error => console.error("Monaco failed to initialize", error),
+  onPreviewError: error => console.error("Markdown preview failed", error)
+});
 
-# Editing this README
+await markdownEditor.setViewMode("preview");
+markdownEditor.syncTextarea();
+markdownEditor.setValue("# Updated");
+markdownEditor.focus();
+markdownEditor.dispose();
+```
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+The controller initializes Monaco for Markdown, keeps the original textarea synchronized,
+debounces secure preview rendering, enhances highlight.js/Mermaid/MathJax, supports image
+paste and drop, and applies consistent professional Monaco defaults (14px Cascadia Code
+font stack, ligatures, semantic highlighting and comfortable vertical padding). Applications
+can still override individual Monaco settings through `editorOptions`.
 
-## Suggestions for a good README
+It also registers consistent Markdown shortcuts:
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+- <kbd>Ctrl/Cmd+B</kbd>: bold
+- <kbd>Ctrl/Cmd+I</kbd>: italic
+- <kbd>Ctrl/Cmd+K</kbd>: inline or fenced code
+- <kbd>Ctrl/Cmd+L</kbd>: link
+- <kbd>Ctrl/Cmd+1</kbd> through <kbd>Ctrl/Cmd+6</kbd>: headings
+- <kbd>Ctrl/Cmd+S</kbd>: `onSave`
+- <kbd>Enter</kbd>: continue bullet and ordered lists
 
-## Name
-Choose a self-explaining name for your project.
+If Monaco cannot be loaded, the original textarea becomes visible and continues to drive
+the same preview. Applications therefore use one fallback policy instead of implementing
+their own. Preview enhancement errors are reported through `onPreviewError` and never
+replace a working Monaco editor. `onError` remains as a deprecated compatibility callback
+for both error categories.
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+## Reading pages
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+```js
+import {
+  initializeMarkdownReader,
+  printMarkdown
+} from "@aiursoft/uistack-markdown-ui";
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+await initializeMarkdownReader({
+  container: ".markdown-body",
+  hljs,
+  mermaid,
+  MathJax
+});
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+printButton.addEventListener("click", () =>
+  printMarkdown({ container: ".markdown-body", hljs, mermaid, MathJax }));
+```
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+Only code blocks inside the supplied container are highlighted. Mermaid is always
+initialized in strict security mode. The reader also applies the shared responsive
+Bootstrap table treatment and opens rendered links with `noopener noreferrer`.
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+## Image paste and drop
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+```js
+import { attachImageUpload } from "@aiursoft/uistack-markdown-ui";
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+const uploads = attachImageUpload({
+  editor,
+  eventTarget: editorContainer.parentElement,
+  uploadUrl: "/api/files/upload",
+  onError: (error, file) => console.error(`Failed to upload ${file.name}`, error)
+});
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+// Call uploads.dispose() when the editor is destroyed.
+```
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+The default queue uploads three files concurrently and retries HTTP 429 responses up
+to five times. Clipboard images are accepted from both `clipboardData.files` and
+`clipboardData.items`, and are captured before Monaco consumes the paste event. Use
+the parent of Monaco's host container as `eventTarget`; `createMarkdownEditor()` does
+this automatically. Use `getImageUrl` when an endpoint does not return
+`internetPath` or `InternetPath`.
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+## Aiursoft application contract
 
-## License
-For open source projects, say how it is licensed.
+MarkToHtml, MoongladeV2, EmployeeCenter and Kanban use the global IIFE build and the
+same `createMarkdownEditor` contract. Monaco, live preview, highlight.js, Mermaid,
+MathJax, Markdown shortcuts, image paste/drop, editor/split/preview modes and the
+textarea fallback are required capabilities for these full editors.
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+DocsViewer and HowToCookViewer are reader-only consumers. Their Markdown containers
+use `initializeMarkdownReader` for highlighting, Mermaid, MathJax, responsive tables
+and safe external-link behavior.
+
+Translate is an intentional product-level exception. It keeps its lightweight
+CodeMirror Markdown input because translation does not need code highlighting,
+Mermaid, MathJax, uploads or the full editing toolbar. It must not be treated as an
+incomplete migration.
