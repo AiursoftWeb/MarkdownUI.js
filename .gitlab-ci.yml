@@ -1,0 +1,20 @@
+stages:
+  - check
+
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
+      when: never
+    - if: '$CI_COMMIT_BRANCH'
+
+check:
+  stage: check
+  script:
+    - npm ci
+    - npm run check
+    - npm pack
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - '*.tgz'
