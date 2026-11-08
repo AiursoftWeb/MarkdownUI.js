@@ -22,6 +22,8 @@ See [usage and API](docs/usage.md) for editors, readers, image uploads and print
 
 ## Development
 
+Build with Node.js 22.18+ (22.x), 24.11+ (24.x), or 26+.
+
 ```bash
 npm ci
 npm run check
