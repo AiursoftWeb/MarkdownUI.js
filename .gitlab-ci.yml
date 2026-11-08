@@ -11,12 +11,12 @@ workflow:
     - if: '$CI_COMMIT_BRANCH == "master"'
       variables:
         S360_PURPOSE: baseline
-        S360_CHECK_KEY: "$S360_BASELINE_KEY"
+        S360_CHECK_KEY: '$S360_BASELINE_KEY'
     - if: '$CI_COMMIT_BRANCH'
 
 variables:
   S360_PURPOSE: review
-  S360_CHECK_KEY: ""
+  S360_CHECK_KEY: ''
 
 s360:
   stage: s360
