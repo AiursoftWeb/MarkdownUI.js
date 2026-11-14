@@ -1,6 +1,6 @@
 {
   "name": "@aiursoft/uistack-markdown-ui",
-  "version": "1.2.21",
+  "version": "1.2.22",
   "description": "Shared, secure Markdown editing and reading utilities for Aiursoft applications.",
   "license": "MIT",
   "type": "module",
@@ -49,6 +49,6 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://gitlab.aiursoft.com/aiursoft/MarkdownUI.js.git"
+    "url": "https://github.com/AiursoftWeb/MarkdownUI.js.git"
   }
 }
