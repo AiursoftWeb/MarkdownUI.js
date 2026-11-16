@@ -64,7 +64,7 @@ responsible for loading Monaco. Passing a loader instead of importing Monaco kee
 out of application bundles and works with the standard Monaco AMD loader.
 
 ```js
-import { createMarkdownEditor } from "@aiursoft/uistack-markdown-ui";
+import { createMarkdownEditor, loadMonacoFromAmd } from "@aiursoft/uistack-markdown-ui";
 
 const markdownEditor = await createMarkdownEditor({
   editorContainer: document.querySelector("#markdown-editor"),
@@ -73,7 +73,7 @@ const markdownEditor = await createMarkdownEditor({
   editorPane: document.querySelector("#editor-pane"),
   previewPane: document.querySelector("#preview-pane"),
   form: document.querySelector("form"),
-  loadMonaco: () => AiursoftMarkdownUi.loadMonacoFromAmd(),
+  loadMonaco: () => loadMonacoFromAmd(),
   theme: "vs-dark",
   uploadUrl: "/api/files/upload",
   initialViewMode: "split",
